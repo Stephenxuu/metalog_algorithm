@@ -362,6 +362,8 @@ def find_a_star(k, x, y):
     mean= summary["mean"]
     variance= summary["variance"]
     sd= summary["standard deviation"]
+    modes= summary["modes"]
+    antimodes= summary["antimodes"]
     return {
         "a_ols": a_ols,
         "f(a_ols)": f(a_ols, x, Y),
@@ -370,6 +372,8 @@ def find_a_star(k, x, y):
         "Mean for a*": mean,
         "Variance for a*": variance,
         "Standard deviation for a*": sd,
+        "Modes": modes,
+        "Antimodes": antimodes,
         "Iterations": iterations,
         "Running time": running_time
     }
@@ -393,6 +397,8 @@ def process_datasets(datasets, k_values, output_file):
             mean = result["Mean for a*"]
             variance = result["Variance for a*"]
             sd = result["Standard deviation for a*"]
+            modes = result["Modes"]
+            antimodes = result["Antimodes"]
             iterations = result.get("Iterations", None)  # If iterations are returned
             running_time = result["Running time"]
 
@@ -407,6 +413,8 @@ def process_datasets(datasets, k_values, output_file):
                 "Mean for a*": round(mean,6),
                 "Variance for a*": round(variance,6),
                 "Standard Deviation for a*": round(sd,6),
+                "Modes": modes,
+                "Antimodes": antimodes,
                 "Iterations": iterations,
                 "Running Time (s)": round(running_time,6)
             })
