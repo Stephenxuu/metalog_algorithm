@@ -39,7 +39,7 @@ This script contains functions for feasibility checks and statistical calculatio
 - `feasible(a)`: Checks whether a given coefficient vector `a` is feasible.
 - `summary_stats(a)`: Computes summary statistics (mean, variance, standard deviation) of the metalog distribution.
 - `bisection_newton(...)`: Uses bisection and Newton's method to solve polynomial roots.
-- `summary_stats(a)`: Computes summary statistics (mean, variance, standard deviation) for a given coefficient vector `a`.
+- `summary_stats(a)`: Computes summary statistics (mean, variance, standard deviation, modes, antimodes) for a given coefficient vector `a`.
 
 ## Usage
 
