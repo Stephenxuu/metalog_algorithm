@@ -741,10 +741,15 @@ def summary_stats(a):
     var = metalog_variance(a)
     sd  = metalog_std(a)
     
+    modes=feasible(a)["modes"]
+    anti_modes=feasible(a)["anti_modes"]
+    
     return {
         "mean": mu,
         "variance": var,
-        "standard deviation": sd
+        "standard deviation": sd,
+        "modes": modes,
+        "anti_modes": anti_modes
     }
     
 #sample test
