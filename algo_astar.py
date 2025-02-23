@@ -16,10 +16,29 @@ import time
 from cvxopt import matrix, solvers
 
 def round_list(lst):
-    """Utility function to round each element in a list to six decimal places."""
+    """
+    Rounds each element in a given list to six decimal places.
+
+    Parameters:
+    lst (list of float): A list of numerical values.
+
+    Returns:
+    list of float: A list where each element is rounded to six decimal places.
+    """
     return [round(x, 6) for x in lst]
 
 def function_G(check_a, hat_a, b):
+    """
+    Constructs a function G(y) based on the provided coefficient vectors.
+
+    Parameters:
+    check_a (list of float): Coefficients associated with the mu functions.
+    hat_a (list of float): Coefficients associated with the s functions.
+    b (numpy array): A precomputed matrix for polynomial coefficient calculations.
+
+    Returns:
+    function: A lambda function representing G(y), which takes a scalar input y in [0,1].
+    """
     num_mu = len(check_a)
     num_s = len(hat_a)
     K = max(num_mu, num_s)
@@ -62,6 +81,17 @@ def function_G(check_a, hat_a, b):
         return f
     
 def function_G_prime(check_a, hat_a, b):
+    """
+    Constructs the first derivative function G'(y) of G(y).
+
+    Parameters:
+    check_a (list of float): Coefficients associated with the mu functions.
+    hat_a (list of float): Coefficients associated with the s functions.
+    b (numpy array): A precomputed matrix for polynomial coefficient calculations.
+
+    Returns:
+    function: A lambda function representing G'(y), which takes a scalar input y in [0,1].
+    """
     num_mu = len(check_a)
     num_s = len(hat_a)
     K = max(num_mu, num_s)
@@ -69,9 +99,20 @@ def function_G_prime(check_a, hat_a, b):
     function_M2 = function_M(2, check_a, hat_a, b)
     G_prime= lambda y: (1 - 2 * y) * function_M1(y) + y * (1 - y) * function_M2(y)
     return G_prime
-# Grid search for the infeasible points using Newton's method
+
+
 def G_value(a, b, y):
-    # Initialize a vector to hold the coefficients for y^0, y^1, ..., y^(j-1)
+    """
+    Evaluates the function G(y) at a given point y based on the coefficient vector a.
+
+    Parameters:
+    a (list of float): The coefficient vector for the metalog distribution.
+    b (numpy array): A precomputed matrix for polynomial coefficient calculations.
+    y (float): A scalar input in the range [0,1].
+
+    Returns:
+    float: The computed value of G(y).
+    """
     check_a = []  # Coefficients assigned to mu
     hat_a = []    # Coefficients assigned to s            
     k=len(a)
@@ -89,6 +130,17 @@ def G_value(a, b, y):
     return G
 
 def grid_search_newtons_method(a, b, tol):
+    """
+    Uses a combination of grid search and Newton’s method to find infeasible points in the range [0,1] for a given coefficient vector.
+
+    Parameters:
+    a (list of float): The coefficient vector to be tested for feasibility.
+    b (numpy array): A precomputed matrix for polynomial coefficient calculations.
+    tol (float): The numerical tolerance for root-finding methods.
+
+    Returns:
+    list of float: A list of values in [0,1] where G(y) is infeasible.
+    """
     check_a = []
     hat_a = []
     k=len(a)
@@ -166,6 +218,18 @@ def grid_search_newtons_method(a, b, tol):
 
 # function of get the matrix G for inquality constraints
 def C_matrix(y_list,num_mu, num_s, b):
+    """
+    Constructs the matrix C, used for inequality constraints in the optimization process.
+
+    Parameters:
+    y_list (list of float): A list of y-values where feasibility constraints need to be applied.
+    num_mu (int): The number of mu-coefficients.
+    num_s (int): The number of s-coefficients.
+    b (numpy array): A precomputed matrix for polynomial coefficient calculations.
+
+    Returns:
+    list of numpy arrays: A list of constraint vectors corresponding to each y-value.
+    """
     k=num_mu+num_s  
     def c_interior(num_mu, num_s, b, y):
         i = 1  # Fixed as per the input
@@ -237,6 +301,17 @@ def C_matrix(y_list,num_mu, num_s, b):
 
 
 def calculate_Y(y,k):
+    """
+    Constructs the Y matrix used for least squares approximation.
+
+    Parameters:
+    y (numpy array): A vector of y-values (in [0,1]) used in the regression.
+    k (int): The number of basis functions used in the approximation.
+
+    Returns:
+    numpy array: An n x k matrix, where n is the number of y-values.
+    """
+
     # Number of rows in Y matches the number of y points
     n = len(y)
     # Initialize Y matrix
@@ -251,11 +326,44 @@ def calculate_Y(y,k):
     return Y
 
 def f(a, x, Y):
+    """
+    Computes the squared residual error for a given coefficient vector a.
+
+    Parameters:
+    a (numpy array): The coefficient vector to be evaluated.
+    x (numpy array): The observed data values.
+    Y (numpy array): The design matrix for the regression problem.
+
+    Returns:
+    float: The squared residual error.
+    """
     residual = x - Y @ a
     return residual.T @ residual
     
-# Algorithm to find the best a*
+
 def find_a_star(k, x, y):
+    """
+    Computes the optimal coefficient vector a* for a given dataset using constrained quadratic programming.
+
+    Parameters:
+    k (int): The number of coefficients to be estimated.
+    x (numpy array): The observed data values.
+    y (numpy array): The corresponding quantile values in [0,1].
+
+    Returns:
+    dict: A dictionary containing:
+        - "a_ols": The ordinary least squares solution.
+        - "f(a_ols)": The residual error for the OLS solution.
+        - "Best a*": The optimized coefficient vector a*.
+        - "f(a*)": The residual error for a*.
+        - "Mean for a*": The mean of the metalog distribution.
+        - "Variance for a*": The variance of the metalog distribution.
+        - "Standard deviation for a*": The standard deviation.
+        - "Modes": A list of modes of the distribution.
+        - "Antimodes": A list of antimodes of the distribution.
+        - "Iterations": The number of iterations in the optimization process.
+        - "Running time": The total execution time in seconds.
+    """
     start_time = time.time()  # Start timing the process
     tol=10e-10
     epsilon=10e-10
@@ -380,6 +488,19 @@ def find_a_star(k, x, y):
 
 # Define a function to process datasets for different values of k
 def process_datasets(datasets, k_values, output_file):
+    """
+    Processes multiple datasets to compute optimal coefficient vectors and saves the results to an Excel file.
+
+    Parameters:
+    datasets (dict): A dictionary where keys are dataset names, and values are dictionaries with keys:
+        - "x" (numpy array): The observed data values.
+        - "y" (numpy array): The corresponding quantile probability levels in [0,1].
+    k_values (dict): A dictionary mapping dataset names to lists of k-values to be evaluated.
+    output_file (str): The name of the output Excel file.
+
+    Returns:
+    None: Saves the computed results to the specified output file.
+    """
     results = []
 
     for dataset_name, data in datasets.items():
