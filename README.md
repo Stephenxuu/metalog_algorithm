@@ -71,8 +71,8 @@ This script contains functions for feasibility checks and statistical calculatio
 - `bisection_newton(...)`: Uses bisection and Newton's method to solve polynomial roots.
 - `summary_stats(a)`: Computes summary statistics (mean, variance, standard deviation, modes, antimodes) for a given coefficient vector `a`.
 
-# Example Usage:
-### Checking Feasibility
+#### Example Usage:
+##### Checking Feasibility
 To check the feasibility of a given coefficient vector `a`, use:
 ```python
 from feasibility_stats import feasible
@@ -81,7 +81,7 @@ result = feasible(a)
 print(result)
 ```
 
-### Computing Summary Statistics
+##### Computing Summary Statistics
 To compute the mean, variance, and standard deviation for a given coefficient vector `a`, use:
 ```python
 from feasibility_stats import summary_stats
