@@ -35,40 +35,33 @@ pip install numpy pandas scipy cvxopt sympy
 ## Files and Functions
 
 ### `algo_astar.py`
-# This file implements the algorithm for fitting an always feasible metalog 2.0 distribution to (quantile, probability) data.
-# It implements Algorithm 1 from the forthcoming paper:
-#
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
-#
-# This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
-# use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
-# we kindly request that you cite the above paper.
-#
-# The main function is find_a_star(k, x, y), which returns the optimal a-coefficients for a k-term metalog distribution
-# that best fits the (x,y) points -- i.e., the ( quantile, probability ) points.
-#
-# Example usage:
-# x = np.array( [ 1, 2, 4, 8, 12 ] )              # quantile values
-# y = np.array( [ 0.1, 0.3, 0.5, 0.7, 0.9 ] )     # cumulative probabilities
-# k = 4                                           # number of terms
-# a_star = find_a_star( k, x, y )                 # The optimal metalog coefficients
-#
-# After you have these optimal a_star coefficients, you can find the quantile values at arbitrary cumulative probability
-# levels, p, using:
-# p = np.array( [0.2, 0.4, 0.6, 0.8] )            # The probability levels of interest
-# basis = calculate_Y( p, k )                     # The basis for the probabilities of interest
-# quantiles = np.sum( a_star * basis, axis=1 )    # The desired quantiles
+This file implements the algorithm for fitting an always feasible metalog 2.0 distribution to (quantile, probability) data.
+It implements Algorithm 1 from the forthcoming paper:
+"On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
 
+This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful, we kindly request that you cite the above paper.
+
+The main function is find_a_star(k, x, y), which returns the optimal a-coefficients for a k-term metalog distribution that best fits the (x,y) points -- i.e., the ( quantile, probability ) points.
+
+#### Example usage:
+```python
+x = np.array( [ 1, 2, 4, 8, 12 ] )              # quantile values
+y = np.array( [ 0.1, 0.3, 0.5, 0.7, 0.9 ] )     # cumulative probabilities
+k = 4                                           # number of terms
+a_star = find_a_star( k, x, y )                 # The optimal metalog coefficients
+
+# After you have these optimal a_star coefficients, you can find the quantile values at arbitrary cumulative probability levels, p, using:
+p = np.array( [0.2, 0.4, 0.6, 0.8] )            # The probability levels of interest
+basis = calculate_Y( p, k )                     # The basis for the probabilities of interest
+quantiles = np.sum( a_star * basis, axis=1 )    # The desired quantiles
+```
 
 ### `feasibility_stats.py`
-# This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken 
-# from the paper:
-#
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
-#
-# This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
-# use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
-# we kindly request that you cite the above paper.
+This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
+
+"On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
+
+This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful, we kindly request that you cite the above paper.
 
 This script contains functions for feasibility checks and statistical calculations:
 
