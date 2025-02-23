@@ -73,7 +73,6 @@ This script contains functions for feasibility checks and statistical calculatio
 - `summary_stats(a)`: Computes summary statistics (mean, variance, standard deviation, modes, antimodes) for a given coefficient vector `a`.
 
 #### Example Usage:
-##### Checking Feasibility
 To check the feasibility of a given coefficient vector `a`, use:
 ```python
 from feasibility_stats import feasible
@@ -82,8 +81,7 @@ result = feasible(a)
 print(result)
 ```
 
-##### Computing Summary Statistics
-To compute the mean, variance, and standard deviation for a given coefficient vector `a`, use:
+To compute the mean, variance, standard deviation, modes and anti-modes for a given coefficient vector `a`, use:
 ```python
 from feasibility_stats import summary_stats
 a = [0.1, 0.2, -0.1, 0.3]
