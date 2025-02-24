@@ -96,7 +96,7 @@ The code is written by Stephen Xu and is provided freely for any purpose, includ
     - `a (tuple)`: Coefficients to check.
     - `tol (float, optional)`: Tolerance for numerical comparisons and root filtering. Defaults to `1e-6`.
   - **Returns**: Dictionary with feasibility flags, roots, modes, anti-modes, and slopes.
-- **`summary_stats(a)`**: Computes mean, variance, standard deviation, modes, and anti-modes for a coefficient vector `a`.
+- **`summary_stats(a)`**: Computes mean, variance, standard deviation, skewness, kurtosis, modes, and anti-modes for a coefficient vector `a`.
 
 #### Supporting Functions
 - **`compute_b_matrix(k, num_s)`**: Computes the `b` matrix for polynomial coefficient calculations.
