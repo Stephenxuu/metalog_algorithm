@@ -146,6 +146,18 @@ def grid_search_newtons_method(a, b, tol):
             hat_a.append(a[i])
 
     def G(y):
+        """
+        Computes the feasibility function G(y) for a given y.
+
+        Args:
+            y (float): Input value in [0, 1].
+
+        Returns:
+            float: Value of G(y), representing y * (1 - y) * M(1)(y) for 0 < y < 1, or a polynomial at boundaries.
+
+        Raises:
+            ValueError: If y is not in [0, 1].
+        """
         if y > 1 or y < 0:
             raise ValueError("y is out of the bound [0,1].")
         elif 0 < y < 1:
@@ -155,6 +167,18 @@ def grid_search_newtons_method(a, b, tol):
         return G
 
     def G_prime(y):
+        """
+        Computes the first derivative G'(y) for a given y.
+
+        Args:
+            y (float): Input value in [0, 1].
+
+        Returns:
+            float: Value of G'(y), using (1 - 2y) * M(1)(y) + y * (1 - y) * M(2)(y) for 0 < y < 1, or S(1)(y) at boundaries.
+
+        Raises:
+            ValueError: If y is not in [0, 1].
+        """
         if y > 1 or y < 0:
             raise ValueError("y is out of the bound [0,1].")
         elif 0 < y < 1:
@@ -164,6 +188,18 @@ def grid_search_newtons_method(a, b, tol):
         return G_prime
 
     def G_doubleprime(y):
+        """
+        Computes the second derivative G''(y) for a given y.
+
+        Args:
+            y (float): Input value in [0, 1].
+
+        Returns:
+            float: Value of G''(y), using -2 * M(1)(y) + 2 * (1 - 2y) * M(2)(y) + y * (1 - y) * M(3)(y) for 0 < y < 1, or S(2)(y) at boundaries.
+
+        Raises:
+            ValueError: If y is not in [0, 1].
+        """
         if y > 1 or y < 0:
             raise ValueError("y is out of the bound [0,1].")
         elif 0 < y < 1:
@@ -221,6 +257,18 @@ def C_matrix(y_list, num_mu, num_s, b):
     k = num_mu + num_s
 
     def c_interior(num_mu, num_s, b, y):
+        """
+        Computes the constraint vector c for interior points (0 < y < 1).
+
+        Args:
+            num_mu (int): Number of mu coefficients.
+            num_s (int): Number of s coefficients.
+            b (numpy.ndarray): Precomputed b matrix.
+            y (float): Input value in (0, 1).
+
+        Returns:
+            numpy.ndarray: Constraint vector c for the interior case.
+        """
         i = 1
         K = max(num_mu, num_s)
         k = num_mu + num_s
@@ -251,6 +299,16 @@ def C_matrix(y_list, num_mu, num_s, b):
         return c
 
     def c_corner(num_s, y):
+        """
+        Computes the constraint vector c for corner points (y = 0 or y = 1).
+
+        Args:
+            num_s (int): Number of s coefficients.
+            y (float): Input value, either 0 or 1.
+
+        Returns:
+            numpy.ndarray: Constraint vector c for the corner case.
+        """
         hat_c = np.zeros(num_s)
         if num_s > 0:
             for t in range(0, num_s):
