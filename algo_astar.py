@@ -1,6 +1,5 @@
 # This file implements the algorithm for fitting an always feasible metalog 2.0 distribution to (quantile, probability) data.
 # It implements Algorithm 1 from the forthcoming paper:
-#
 # "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
 #
 # This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
