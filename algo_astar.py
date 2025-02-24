@@ -6,6 +6,21 @@
 # This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
 # use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
 # we kindly request that you cite the above paper.
+#
+# The main function is find_a_star(k, x, y), which returns the optimal a-coefficients for a k-term metalog distribution
+# that best fits the (x,y) points -- i.e., the ( quantile, probability ) points.
+#
+# Example usage:
+# x = np.array( [ 1, 2, 4, 8, 12 ] )              # quantile values
+# y = np.array( [ 0.1, 0.3, 0.5, 0.7, 0.9 ] )     # cumulative probabilities
+# k = 4                                           # number of terms
+# a_star = find_a_star( k, x, y )                 # The optimal metalog coefficients
+#
+# After you have these optimal a_star coefficients, you can find the quantile values at arbitrary cumulative probability
+# levels, p, using:
+# p = np.array( [0.2, 0.4, 0.6, 0.8] )            # The probability levels of interest
+# basis = calculate_Y( p, k )                     # The basis for the probabilities of interest
+# quantiles = np.sum( a_star * basis, axis=1 )    # The desired quantile
 
 from feasibility_stats import feasible as fb
 from feasibility_stats import compute_b_matrix as compute_b_matrix
