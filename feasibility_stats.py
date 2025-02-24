@@ -1,3 +1,19 @@
+# This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
+# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
+#
+# This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
+# use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
+# we kindly request that you cite the above paper.
+
+# Example usage:
+# a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
+# Given coefficients, you can check the feasibility of the metalog using:
+# check = feasible(a)                             # Check the feasibility
+
+# a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
+# Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
+# result = summary_stats(a)                       # Find the summary statistics
+
 import math
 import numpy as np
 from scipy.optimize import root_scalar, newton
