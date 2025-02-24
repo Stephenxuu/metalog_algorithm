@@ -11,7 +11,7 @@
 # check = feasible(a)                             # Check the feasibility
 
 # a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
-# Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
+# Given coefficients, you can also find the mean, variance, standard deviation, skewness, kurtosis, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
 
 import math
@@ -616,17 +616,19 @@ def feasible(a, tol=1e-6):
         "tail_feasible_one": tailfeasible_one
     }
 
-# Summary statistics
 def summary_stats(a):
     """
-    Computes summary statistics (mean, variance, standard deviation) for a metalog distribution.
+    Computes summary statistics (mean, variance, standard deviation, skewness, kurtosis,
+    modes, and anti-modes) for a metalog distribution.
 
     Args:
         a (tuple): Coefficients of the metalog distribution.
 
     Returns:
-        dict: Dictionary containing mean, variance, standard deviation, modes, and anti-modes.
+        dict: Dictionary containing mean, variance, standard deviation, skewness, kurtosis,
+              modes, and anti-modes.
     """
+
     def stirling_first_kind(w, n):
         """
         Computes signed Stirling numbers of the first kind using a recurrence relation.
@@ -835,9 +837,109 @@ def summary_stats(a):
         """
         return math.sqrt(metalog_variance(a))
 
+    # ------------
+    # Setup needed for function M(...)
+    # ------------
+    k = len(a)
+    check_a = []
+    hat_a = []
+    for i in range(k):
+        if i % 4 == 0 or i % 4 == 3:
+            check_a.append(a[i])
+        elif i % 4 == 1 or i % 4 == 2:
+            hat_a.append(a[i])
+    num_s = len(hat_a)
+    b = compute_b_matrix(k, num_s)
+
+    def metalog_third_central_moment(a, steps=2000):
+        """
+        Numerically approximates the third central moment of the metalog distribution.
+
+        Args:
+            a (tuple): Coefficients of the metalog distribution.
+            steps (int, optional): Number of subintervals used in midpoint Riemann sum.
+                                   Default is 2000.
+
+        Returns:
+            float: Approximation of the third central moment of M(y).
+        """
+        mu = metalog_mean(a)
+        step = 1.0 / steps
+        total = 0.0
+        for i in range(steps):
+            # Use midpoint rule for a little extra accuracy
+            y = (i + 0.5) * step
+            total += (M(0, check_a, hat_a, b, y) - mu) ** 3
+        return total * step
+
+    def metalog_fourth_central_moment(a, steps=2000):
+        """
+        Numerically approximates the fourth central moment of the metalog distribution.
+
+        Args:
+            a (tuple): Coefficients of the metalog distribution.
+            steps (int, optional): Number of subintervals used in midpoint Riemann sum.
+                                   Default is 2000.
+
+        Returns:
+            float: Approximation of the fourth central moment of M(y).
+        """
+        mu = metalog_mean(a)
+        step = 1.0 / steps
+        total = 0.0
+        for i in range(steps):
+            y = (i + 0.5) * step
+            total += (M(0, check_a, hat_a, b, y) - mu) ** 4
+        return total * step
+
+    def metalog_skewness(a):
+        """
+        Computes the skewness of the metalog distribution.
+
+        Skewness is defined as:
+            T / (variance^(3/2)),
+        where T is the third central moment.
+
+        Args:
+            a (tuple): Coefficients of the metalog distribution.
+
+        Returns:
+            float: Skewness value, or NaN if variance is zero or negative.
+        """
+        var = metalog_variance(a)
+        if var <= 0:
+            return float('nan')
+        T = metalog_third_central_moment(a)
+        return T / (var ** 1.5)
+
+    def metalog_kurtosis(a):
+        """
+        Computes the kurtosis of the metalog distribution.
+
+        Kurtosis is defined as:
+            Q / (variance^2),
+        where Q is the fourth central moment.
+
+        Args:
+            a (tuple): Coefficients of the metalog distribution.
+
+        Returns:
+            float: Kurtosis value, or NaN if variance is zero or negative.
+        """
+        var = metalog_variance(a)
+        if var <= 0:
+            return float('nan')
+        Q = metalog_fourth_central_moment(a)
+        return Q / (var ** 2)
+
+    # Now compute all desired statistics
     mu = metalog_mean(a)
     var = metalog_variance(a)
     sd = metalog_std(a)
+    skew = metalog_skewness(a)
+    kurt = metalog_kurtosis(a)
+
+    # Suppose you have some feasible(...) function:
     modes = feasible(a)["modes"]
     anti_modes = feasible(a)["anti_modes"]
 
@@ -845,6 +947,8 @@ def summary_stats(a):
         "mean": mu,
         "variance": var,
         "standard deviation": sd,
+        "skewness": skew,
+        "kurtosis": kurt,
         "modes": modes,
         "anti_modes": anti_modes
     }
@@ -853,5 +957,7 @@ def summary_stats(a):
 # a = (22.71, 1.74, 486.9, 15.4, -2398)
 # check = feasible(a)
 # print(check)
+
+# a = (22.71, 1.74, 486.9, 15.4, -2398)
 # result = summary_stats(a)
 # print(result)
