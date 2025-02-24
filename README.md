@@ -70,7 +70,7 @@ y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])  # Cumulative probabilities
 k = 4                                    # Number of terms
 
 # Compute optimal coefficients
-a_star_result = find_a_star(k, x, y)
+a_star_result = find_a_star(k, x, y)  # Customized epsilon: a_star_result = find_a_star(k, x, y, epsilon=10e-7)
 a_star = a_star_result["Best a*"]
 print(a_star_result)
 
@@ -112,8 +112,8 @@ The code is written by Stephen Xu and is provided freely for any purpose, includ
 from feasibility_stats import feasible, summary_stats
 
 # Check feasibility
-a = (0.1, 0.2, -0.1, 0.3)
-feasibility_result = feasible(a, tol=1e-5)  # Custom tolerance
+a = (22.71, 1.74, 486.9, 15.4, -2398)
+feasibility_result = feasible(a)
 print(feasibility_result)
 
 # Compute statistics
