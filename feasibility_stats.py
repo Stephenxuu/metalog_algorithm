@@ -11,7 +11,7 @@
 # check = feasible(a)                             # Check the feasibility
 
 # a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
-# Given coefficients, you can also find the mean, variance, standard deviation, skewness, kurtosis, modes and antimodes of the metalog using:
+# Given coefficients, you can also find the mean, variance, standard deviation, skewness, kuorosis, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
 
 import math
@@ -20,7 +20,9 @@ from scipy.optimize import root_scalar, newton
 from scipy.special import factorial
 import sympy as sp
 import pandas as pd
-from math import log, comb
+from math import log, factorial, pi
+from scipy.special import comb
+from scipy.integrate import quad
 
 # Utility function
 def round_list(lst):
@@ -34,26 +36,8 @@ def round_list(lst):
         list: List with each element rounded to six decimal places.
     """
     return [round(x, 6) for x in lst]
-
-# Compute b_tu matrix
-def compute_b_matrix(k, num_s):
-    """
-    Computes the b_tu matrix based on given formulas for Stirling numbers and P_w terms.
-
-    Args:
-        k (int): Parameter determining the size of the matrix.
-        num_s (int): Number of s terms.
-
-    Returns:
-        numpy.ndarray: 3D array containing computed b[t, u, i] values.
-    """
-    K = (k + 1) // 2
-    T_max = num_s
-    U_max = max(2, K) + num_s - 1
-    I_max = max(K, 2) + 1
-    b = np.zeros((T_max, U_max, I_max + 3))
-
-    def stirling_first_kind(w, n):
+# stirling_first_kind function
+def stirling_first_kind(w, n):
         """
         Computes signed Stirling numbers of the first kind using a recurrence relation.
 
@@ -76,6 +60,24 @@ def compute_b_matrix(k, num_s):
             for j in range(1, min(i + 1, n + 1)):
                 S[i, j] = -(i - 1) * S[i - 1, j] + S[i - 1, j - 1]
         return int(S[w, n])
+
+# Compute b_tu matrix
+def compute_b_matrix(k, num_s):
+    """
+    Computes the b_tu matrix based on given formulas for Stirling numbers and P_w terms.
+
+    Args:
+        k (int): Parameter determining the size of the matrix.
+        num_s (int): Number of s terms.
+
+    Returns:
+        numpy.ndarray: 3D array containing computed b[t, u, i] values.
+    """
+    K = (k + 1) // 2
+    T_max = num_s
+    U_max = max(2, K) + num_s - 1
+    I_max = max(K, 2) + 1
+    b = np.zeros((T_max, U_max, I_max + 3))
 
     def P_w(w, i, j):
         """
@@ -615,6 +617,130 @@ def feasible(a, tol=1e-6):
         "tail_feasible_zero": tailfeasible_zero,
         "tail_feasible_one": tailfeasible_one
     }
+ 
+def I(j, u):
+    """
+    Numerically approximate I(j,u) = ∫_{0 to 1} (y - 0.5)^j * [ln(y)]^u dy.
+    j, u should be nonnegative integers for the formula to make sense
+    (and to avoid issues with branch cuts of ln(y) and integrability).
+    """
+
+    def integrand(y):
+        # Guard against y=0 in the log
+        if y == 0.0:
+            return 0.0
+        return (y - 0.5)**j * (log(y/(1-y)))**u
+
+    # Integrate from 0 to 1
+    result, err = quad(integrand, 0.0, 1.0)
+    return result
+    
+
+def raw_moment(t, a):
+    """
+    Compute the t-th moment of M(y) for given t, k, and coefficients a.
+    
+    Parameters:
+    - t: The moment order (integer ≥ 1)
+    - k: Number of terms in M(y) (integer ≥ 2)
+    - a: List of coefficients a[j] for j = 1 to k
+    
+    Returns:
+    - The t-th moment value
+    """
+    
+    def floor_div_2(j):
+        """
+        Compute ⌊(j-1)/2⌋ for a given j.
+        """
+        return (j - 1) // 2
+    
+    # Get sets μ and s
+    k=len(a)
+    mu = [j for j in range(1, k + 1) if j % 4 <= 1]
+    s = [j for j in range(1, k + 1) if j % 4 >= 2]
+    # Initialize total moment
+    total = 0
+    
+    # Iterate over all possible n1, n2 where n1 + n2 = t
+    for n1 in range(t + 1):  # n1 from 0 to t
+        n2 = t - n1  # n2 = t - n1
+        
+        # Generate all combinations of c_j for j in μ summing to n1
+        c_combinations = generate_combinations(n1, len(mu))
+        
+        # Generate all combinations of d_j for j in s summing to n2
+        d_combinations = generate_combinations(n2, len(s))
+        
+        # Iterate over all pairs of c and d combinations
+        for c in c_combinations:
+            for d in d_combinations:
+                # Create dictionaries for c_j and d_j
+                c_dict = {mu[i]: c[i] for i in range(len(mu))}
+                d_dict = {s[i]: d[i] for i in range(len(s))}
+                
+                # Compute factorials in denominators
+                denom_mu = 1
+                for cj in c_dict.values():
+                    denom_mu *= factorial(cj)
+                denom_s = 1
+                for dj in d_dict.values():
+                    denom_s *= factorial(dj)
+                denom = denom_mu * denom_s
+                
+                # Compute products in numerators
+                prod_mu = 1
+                for j in mu:
+                    prod_mu *= a[j-1] ** c_dict[j]  # a[j-1] because a is 0-indexed
+                prod_s = 1
+                for j in s:
+                    prod_s *= a[j-1] ** d_dict[j]
+                
+                # Compute m (exponent for I(m, u))
+                m = 0
+                for j in mu:
+                    m += c_dict[j] * floor_div_2(j)
+                for j in s:
+                    m += d_dict[j] * floor_div_2(j)
+                
+                # u is n2
+                u = n2
+                
+                # Compute the term
+                term = (factorial(t) / denom) * prod_mu * prod_s * I(m, u)
+                total += term
+    return total
+
+def central_moment(t, a):
+    """
+    Computes the t-th central moment E[(M - E[M])^t].
+    Args:
+        t (int): Order of the central moment (t >= 0).
+        a (float): Parameter of the distribution.
+    Returns:
+        float: The t-th central moment.
+    Raises:
+        ValueError: If t is negative.
+    """
+    if not isinstance(t, int) or t < 0:
+        raise ValueError("Moment order t must be a non-negative integer.")
+    
+    # Get the mean (1st raw moment)
+    mu = raw_moment(1, a)
+    
+    if t == 0:
+        return 1.0  # E[(M - mu)^0] = 1
+    if t == 1:
+        return 0.0  # E[M - mu] = 0
+    
+    # Compute the t-th central moment using raw moments up to t
+    central_moment = 0.0
+    for k in range(t + 1):
+        binom = comb(t, k, exact=True)  # Binomial coefficient
+        current_raw_moment = raw_moment(k, a) if k > 0 else 1.0  # E[M^k], E[M^0] = 1
+        central_moment += binom * current_raw_moment * (-mu)**(t - k)
+    
+    return central_moment
 
 def summary_stats(a):
     """
@@ -629,315 +755,13 @@ def summary_stats(a):
               modes, and anti-modes.
     """
 
-    def stirling_first_kind(w, n):
-        """
-        Computes signed Stirling numbers of the first kind using a recurrence relation.
-
-        Args:
-            w (int): Upper index of Stirling number.
-            n (int): Lower index of Stirling number.
-
-        Returns:
-            int: Signed Stirling number S(w, n).
-        """
-        if w == 0 and n == 0:
-            return 1
-        if w == 0 or n == 0:
-            return 0
-        if n > w:
-            return 0
-        S = np.zeros((w + 1, n + 1))
-        S[0, 0] = 1
-        for i in range(1, w + 1):
-            for j in range(1, min(i + 1, n + 1)):
-                S[i, j] = -(i - 1) * S[i - 1, j] + S[i - 1, j - 1]
-        return int(S[w, n])
-
-    def I_m_0(m):
-        """
-        Computes I(m, 0) = (0.5)^m / (m + 1), valid for m even.
-
-        Args:
-            m (int): Index, must be even.
-
-        Returns:
-            float: Value of I(m, 0).
-
-        Raises:
-            ValueError: If m is odd.
-        """
-        if m % 2 != 0:
-            raise ValueError("I(m,0) requires m to be even.")
-        return (0.5 ** m) / (m + 1)
-
-    def I_m_1(m):
-        """
-        Computes I(m, 1) using signed Stirling numbers, valid for m odd.
-
-        Args:
-            m (int): Index, must be odd.
-
-        Returns:
-            float: Value of I(m, 1).
-
-        Raises:
-            ValueError: If m is even.
-        """
-        if m % 2 == 0:
-            raise ValueError("I(m,1) requires m to be odd.")
-        total = 0.0
-        for n in range(1, m + 1):
-            s_val = stirling_first_kind(n + 1, 2)
-            total += comb(m, n) * (0.5 ** (m - n)) * (s_val / factorial(n + 1))
-        return total
-
-    def I_m_2(m):
-        """
-        Computes I(m, 2) using signed Stirling numbers, valid for m even.
-
-        Args:
-            m (int): Index, must be even.
-
-        Returns:
-            float: Value of I(m, 2).
-
-        Raises:
-            ValueError: If m is odd.
-        """
-        if m % 2 != 0:
-            raise ValueError("I(m,2) requires m to be even.")
-        part1 = (math.pi ** 2) * (0.5 ** m) / (3 * (m + 1))
-        part2 = 0.0
-        for n in range(2, m + 1):
-            s_val = stirling_first_kind(n + 1, 3)
-            part2 += comb(m, n) * (0.5 ** (m - n)) * (s_val / factorial(n + 1))
-        return part1 + 2.0 * part2
-
-    def metalog_mean(a):
-        """
-        Computes the mean of the metalog distribution.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-
-        Returns:
-            float: Mean value.
-        """
-        k = len(a)
-        mean_val = 0.0
-        for j in range(1, k + 1):
-            aj = a[j - 1]
-            if j % 4 == 1:
-                mean_val += aj * I_m_0((j - 1) // 2)
-            elif j % 4 == 3:
-                mean_val += aj * I_m_1((j - 1) // 2)
-        return mean_val
-
-    def Vj(j):
-        """
-        Computes V_j based on piecewise definition depending on j mod 4.
-
-        Args:
-            j (int): Index (1-based).
-
-        Returns:
-            float: Value of V_j.
-        """
-        r = j % 4
-        if r == 1:
-            return I_m_0(j - 1) - (I_m_0((j - 1) // 2)) ** 2
-        elif r == 2:
-            return I_m_2(j - 2)
-        elif r == 3:
-            return I_m_2(j - 1) - (I_m_1((j - 1) // 2)) ** 2
-        else:
-            return I_m_0(j - 2)
-
-    def Vjj_even(j, jprime):
-        """
-        Computes V_{j,j'}^{even} based on piecewise definition for even indices.
-
-        Args:
-            j (int): First index (1-based).
-            jprime (int): Second index (1-based).
-
-        Returns:
-            float: Value of V_{j,j'}^{even}.
-        """
-        rj = j % 4
-        rjp = jprime % 4
-        M = (j + jprime - 4) // 2
-        if rj == 1 or rjp == 1 or rj == 3 or rjp == 3:
-            return 0
-        elif rj == 2 and rjp == 2:
-            return I_m_2(M)
-        elif rj == 0 and rjp == 0:
-            return I_m_0(M)
-        else:
-            return I_m_1(M)
-
-    def Vjj_odd(j, jprime):
-        """
-        Computes V_{j,j'}^{odd} based on piecewise definition for odd indices.
-
-        Args:
-            j (int): First index (1-based).
-            jprime (int): Second index (1-based).
-
-        Returns:
-            float: Value of V_{j,j'}^{odd}.
-        """
-        rj = j % 4
-        rjp = jprime % 4
-        M = (j + jprime - 2) // 2
-        if rj == 0 or rjp == 0 or rj == 2 or rjp == 2:
-            return 0
-        elif rj == 1 and rjp == 1:
-            return I_m_0(M) - I_m_0((j - 1) // 2) * I_m_0((jprime - 1) // 2)
-        elif rj == 3 and rjp == 3:
-            return I_m_2(M) - I_m_1((j - 1) // 2) * I_m_1((jprime - 1) // 2)
-        elif rj == 1 and rjp == 3:
-            return I_m_1(M) - I_m_0((j - 1) // 2) * I_m_1((jprime - 1) // 2)
-        else:
-            return I_m_1(M) - I_m_1((j - 1) // 2) * I_m_0((jprime - 1) // 2)
-
-    def metalog_variance(a):
-        """
-        Computes the variance of the metalog distribution using piecewise definitions.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-
-        Returns:
-            float: Variance value.
-        """
-        k = len(a)
-        var_val = 0.0
-        for j in range(2, k + 1):
-            var_val += (a[j - 1] ** 2) * Vj(j)
-        for j in range(2, k):
-            for jprime in range(j + 1, k + 1):
-                if (j % 2 == 0) and (jprime % 2 == 0):
-                    var_val += 2.0 * a[j - 1] * a[jprime - 1] * Vjj_even(j, jprime)
-        for j in range(3, k):
-            for jprime in range(j + 1, k + 1):
-                if (j % 2 == 1) and (jprime % 2 == 1):
-                    var_val += 2.0 * a[j - 1] * a[jprime - 1] * Vjj_odd(j, jprime)
-        return var_val
-
-    def metalog_std(a):
-        """
-        Computes the standard deviation of the metalog distribution.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-
-        Returns:
-            float: Standard deviation value.
-        """
-        return math.sqrt(metalog_variance(a))
-
-    # ------------
-    # Setup needed for function M(...)
-    # ------------
-    k = len(a)
-    check_a = []
-    hat_a = []
-    for i in range(k):
-        if i % 4 == 0 or i % 4 == 3:
-            check_a.append(a[i])
-        elif i % 4 == 1 or i % 4 == 2:
-            hat_a.append(a[i])
-    num_s = len(hat_a)
-    b = compute_b_matrix(k, num_s)
-
-    def metalog_third_central_moment(a, steps=2000):
-        """
-        Numerically approximates the third central moment of the metalog distribution.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-            steps (int, optional): Number of subintervals used in midpoint Riemann sum.
-                                   Default is 2000.
-
-        Returns:
-            float: Approximation of the third central moment of M(y).
-        """
-        mu = metalog_mean(a)
-        step = 1.0 / steps
-        total = 0.0
-        for i in range(steps):
-            # Use midpoint rule for a little extra accuracy
-            y = (i + 0.5) * step
-            total += (M(0, check_a, hat_a, b, y) - mu) ** 3
-        return total * step
-
-    def metalog_fourth_central_moment(a, steps=2000):
-        """
-        Numerically approximates the fourth central moment of the metalog distribution.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-            steps (int, optional): Number of subintervals used in midpoint Riemann sum.
-                                   Default is 2000.
-
-        Returns:
-            float: Approximation of the fourth central moment of M(y).
-        """
-        mu = metalog_mean(a)
-        step = 1.0 / steps
-        total = 0.0
-        for i in range(steps):
-            y = (i + 0.5) * step
-            total += (M(0, check_a, hat_a, b, y) - mu) ** 4
-        return total * step
-
-    def metalog_skewness(a):
-        """
-        Computes the skewness of the metalog distribution.
-
-        Skewness is defined as:
-            T / (variance^(3/2)),
-        where T is the third central moment.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-
-        Returns:
-            float: Skewness value, or NaN if variance is zero or negative.
-        """
-        var = metalog_variance(a)
-        if var <= 0:
-            return float('nan')
-        T = metalog_third_central_moment(a)
-        return T / (var ** 1.5)
-
-    def metalog_kurtosis(a):
-        """
-        Computes the kurtosis of the metalog distribution.
-
-        Kurtosis is defined as:
-            Q / (variance^2),
-        where Q is the fourth central moment.
-
-        Args:
-            a (tuple): Coefficients of the metalog distribution.
-
-        Returns:
-            float: Kurtosis value, or NaN if variance is zero or negative.
-        """
-        var = metalog_variance(a)
-        if var <= 0:
-            return float('nan')
-        Q = metalog_fourth_central_moment(a)
-        return Q / (var ** 2)
-
     # Now compute all desired statistics
-    mu = metalog_mean(a)
-    var = metalog_variance(a)
-    sd = metalog_std(a)
-    skew = metalog_skewness(a)
-    kurt = metalog_kurtosis(a)
+    mu = raw_moment(1,a)
+    print(mu)
+    var = central_moment(2,a)
+    sd = math.sqrt(var)
+    skew = central_moment(3,a) / (sd ** 3)
+    kurt = central_moment(4,a) / (sd ** 4)
 
     # Suppose you have some feasible(...) function:
     modes = feasible(a)["modes"]
