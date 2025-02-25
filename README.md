@@ -133,7 +133,7 @@ The code is written by Stephen Xu and is provided freely for any purpose, includ
 - **`function_M(i, check_a, hat_a, b)`**, **`function_S(i, check_a, hat_a)`**: Provide callable versions of `M` and `S` for root-finding.  
 - **`bisection_newton(...)`**: Implements a hybrid bisection-Newton method to locate roots within `(0, 1)` with high precision.  
 - **`check_at_zero(i, check_a, hat_a, tol)`**, **`check_at_one(i, check_a, hat_a, tol)`**: Analyze limit behavior at boundaries.  
-- **`I(m, u)`**: Numerically approximates the integral \( I(m, u) = \int_0^1 (y - 0.5)^m [\ln(y/(1-y))]^u \, dy \) using `scipy.integrate.quad`, essential for moment calculations; `m` and `u` are non-negative integers.  
+- **`I(m, u)`**: Numerically approximates the integral I(m, u) = \int_0^1 (y - 0.5)^m (ln(y/(1-y)))^u dy using `scipy.integrate.quad`, essential for moment calculations; `m` and `u` are non-negative integers.  
 - **`raw_moment(t, a)`**: Calculates the t-th raw moment \( E[M^t] \) using `I(m, u)` to integrate terms over `[0, 1]`.  
 - **`central_moment(t, a)`**: Computes the t-th central moment \( E[(M - E[M])^t] \) based on raw moments.  
 
