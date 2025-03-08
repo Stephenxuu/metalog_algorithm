@@ -11,7 +11,7 @@
 # check = feasible(a)                             # Check the feasibility
 
 # a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
-# Given coefficients, you can also find the mean, variance, standard deviation, skewness, kuorosis, modes and antimodes of the metalog using:
+# Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
 
 import math
@@ -23,6 +23,7 @@ import pandas as pd
 from math import log, factorial, pi
 from scipy.special import comb
 from scipy.integrate import quad
+
 
 # Utility function
 def round_list(lst):
@@ -635,6 +636,20 @@ def I(j, u):
     result, err = quad(integrand, 0.0, 1.0)
     return result
     
+def generate_combinations(n, length):
+    """
+    Generate all possible tuples of non-negative integers summing to n with given length.
+    Returns a list of tuples, where each tuple represents a valid combination.
+    """
+    if length == 1:
+        if n >= 0:
+            return [(n,)]
+        return []
+    result = []
+    for i in range(n + 1):
+        for sub_combo in generate_combinations(n - i, length - 1):
+            result.append((i,) + sub_combo)
+    return result
 
 def raw_moment(t, a):
     """
@@ -757,7 +772,6 @@ def summary_stats(a):
 
     # Now compute all desired statistics
     mu = raw_moment(1,a)
-    print(mu)
     var = central_moment(2,a)
     sd = math.sqrt(var)
     skew = central_moment(3,a) / (sd ** 3)
