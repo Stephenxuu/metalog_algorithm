@@ -558,8 +558,8 @@ def process_datasets(datasets, k_values, output_file):
     print(f"Results saved to {output_file}")
 
 # Example usage
-# x = np.array([1, 2, 4, 8, 12])              # Quantile values
-# y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])     # Cumulative probabilities
-# k = 4                                        # Number of terms
-# a_star = find_a_star(k, x, y)                # The optimal metalog coefficients
-# print(a_star)
+x = np.array([1, 2, 4, 8, 12])              # Quantile values
+y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])     # Cumulative probabilities
+k = 4                                        # Number of terms
+a_star = find_a_star(k, x, y)                # The optimal metalog coefficients
+print(a_star)
