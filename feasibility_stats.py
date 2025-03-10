@@ -632,8 +632,12 @@ def I(j, u):
             return 0.0
         return (y - 0.5)**j * (log(y/(1-y)))**u
 
-    # Integrate from 0 to 1
-    result, err = quad(integrand, 0.0, 1.0)
+    # if j and u have different parity: the integral is 0
+    if (j % 2) != (u % 2):
+        result = 0.0
+    # if j and u have the same parity: integrate from 0 to 1
+    else:    
+        result, err = quad(integrand, 0.0, 1.0)
     return result
     
 def generate_combinations(n, length):
