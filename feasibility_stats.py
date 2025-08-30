@@ -76,7 +76,11 @@ def compute_b_matrix(k, num_s):
     """
     K = (k + 1) // 2
     T_max = num_s
-    U_max = max(2, K) + num_s - 1
+    # Ensure U_max is large enough to handle the maximum u index that will be accessed
+    # The M function accesses b[t, u, i] for u in range(i), so u can be up to i-1
+    # The maximum i used is at least max(K, 3) based on the algorithm
+    max_i = max(K, 3)
+    U_max = max(2, K, max_i) + num_s - 1
     I_max = max(K, 2) + 1
     b = np.zeros((T_max, U_max, I_max + 3))
 
@@ -129,7 +133,7 @@ def compute_b_matrix(k, num_s):
                 b[t][u][i] = b_tu
     return b
 
-# M, S, and mu functions
+# M, S, and mu functions （revised)
 def M(i, check_a, hat_a, b, y):
     """
     Computes the i-th M function M(i)(y) based on provided coefficients and b matrix.
@@ -796,10 +800,11 @@ def summary_stats(a):
     }
 
 # Sample test
-a = (22.71, 1.74, 486.9, 15.4, -2398)
-check = feasible(a)
-print(check)
+# a = (22.71, 1.74, 486.9, 15.4, -2398)
+# check = feasible(a)
+# print(check)
 
 a = (22.71, 1.74, 486.9, 15.4, -2398)
 result = summary_stats(a)
 print(result)
+
