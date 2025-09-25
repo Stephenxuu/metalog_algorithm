@@ -4,9 +4,9 @@
 This repository contains Python implementations of key algorithms and feasibility analysis techniques from the forthcoming paper:
 
 **"On the Properties of the Metalog Distribution"**  
-by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
+by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Zixin Stephen Xu
 
-The code in this repository was developed by Stephen Xu, based on the results and methods described in the paper. It provides tools for finding optimal Metalog 2.0 coefficients that guarantee feasibility, performing feasibility checks, analytically computing moment statistics (mean, variance, standard deviation, skewness, kurtosis), obtaining the Metalog 2.0 basis, and identifying modes, anti-modes, and roots.
+The code in this repository was developed by Zixin Stephen Xu, based on the results and methods described in the paper. It provides tools for finding optimal Metalog 2.0 coefficients that guarantee feasibility, performing feasibility checks, analytically computing moment statistics (mean, variance, standard deviation, skewness, kurtosis), obtaining the Metalog 2.0 basis, and identifying modes, anti-modes, and roots.
 
 This repository serves as a computational companion to the paper, enabling researchers and practitioners to explore the mathematical properties of the Metalog distribution and apply optimization techniques to real-world datasets.
 
