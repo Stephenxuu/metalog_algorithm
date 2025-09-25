@@ -20,19 +20,27 @@ Together, these scripts allow you to fit Metalog distributions, verify feasibili
 
 ## Dependencies
 
-Install the required libraries with:
+All dependencies are listed in `requirements.txt`. You can install them all at once by running:
+
+```sh
+pip install -r requirements.txt
+```
+
+Contents of `requirements.txt`:
+
+```
+numpy>=1.26.0,<2.0
+pandas>=2.0.0,<3.0
+scipy>=1.11.0,<2.0
+cvxopt>=1.3.0,<2.0
+sympy>=1.12,<2.0
+```
+
+Alternatively, you may install the packages individually:
 
 ```sh
 pip install numpy pandas scipy cvxopt sympy
 ```
-
-Required packages:
-
-* **numpy** – numerical computations and matrix operations
-* **pandas** – data manipulation and exporting results
-* **scipy** – optimization (Newton's method), integration, and special functions
-* **cvxopt** – quadratic programming solver
-* **sympy** – symbolic mathematics
 
 ## Files and Functions
 
