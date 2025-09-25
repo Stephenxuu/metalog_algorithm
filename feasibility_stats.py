@@ -800,11 +800,9 @@ def summary_stats(a):
     }
 
 # Sample test
-# a = (22.71, 1.74, 486.9, 15.4, -2398)
+# a = (22.62, 5.64, 3.19, 35.51)
 # check = feasible(a)
 # print(check)
-
-a = (22.71, 1.74, 486.9, 15.4, -2398)
-result = summary_stats(a)
-print(result)
+# result = summary_stats(a)
+# print(result)
 
