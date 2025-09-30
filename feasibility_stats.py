@@ -7,11 +7,11 @@
 # we kindly request that you cite the above paper.
 
 # Example usage:
-# a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
+# a = (22.62, 5.64, 3.19, 35.51)         # coefficient vector
 # Given coefficients, you can check the feasibility of the metalog using:
 # check = feasible(a)                             # Check the feasibility
 
-# a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
+# a = (22.62, 5.64, 3.19, 35.51)          # coefficient vector
 # Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
 import time
@@ -921,7 +921,7 @@ def summary_stats(a, precise_method=None):
 
 
 # Sample test
-a = (22.71, 1.74, 486.9, 15.4, -2398)
+a = (22.62, 5.64, 3.19, 35.51)
 feasibility= feasible(a)
 print(feasibility)
 result = summary_stats(a, precise_method=True)
