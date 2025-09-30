@@ -14,7 +14,6 @@
 # a = (22.62, 5.64, 3.19, 35.51)          # coefficient vector
 # Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
-import time
 import math
 import numpy as np
 from scipy.optimize import root_scalar, newton
@@ -24,7 +23,7 @@ import pandas as pd
 from math import log, factorial, pi
 from scipy.special import comb
 from functools import lru_cache
-
+from mpmath import mp
 # Utility function
 def round_list(lst):
     """
@@ -623,60 +622,6 @@ def feasible(a, tol=1e-6):
         "tail_feasible_one": tailfeasible_one
     }
  
-def compute_J0(i, u):
-    """
-    Compute J0 precisely using symbolic differentiation of the Beta function.
-
-    Args:
-        i (int): Nonnegative integer index for the first derivative.
-        u (int): Nonnegative integer index for the second derivative.
-
-    Returns:
-        float: The computed J0(i, u) value.
-    """
-    a, b = sp.symbols('a b')
-    B = sp.gamma(a) * sp.gamma(b) / sp.gamma(a + b)
-    W = sp.diff(B, a, i, b, u)
-    W_val = W.subs({a: 1, b: 1})
-    J0 = ((-1)**u) / (sp.factorial(i) * sp.factorial(u)) * W_val
-    return float(J0)
-
-from mpmath import mp
-
-def _zeta_even(u: int) -> float:
-    """
-    ζ(u) for even positive integers u (fast/closed forms).
-    Extend the table if you expect u > 24.
-    """
-    if u % 2 == 1 or u < 2:
-        raise ValueError("zeta_even is only defined for even u >= 2.")
-    # Known exact values: ζ(2)=π^2/6, ζ(4)=π^4/90, ζ(6)=π^6/945, ...
-    table = {
-        2:  (pi**2)  / 6.0,
-        4:  (pi**4)  / 90.0,
-        6:  (pi**6)  / 945.0,
-        8:  (pi**8)  / 9450.0,
-        10: (pi**10) / 93555.0,
-        12: (pi**12) / 638512875.0,
-        14: (pi**14) / 1825305300.0,
-        16: (pi**16) / 325641566250.0,
-        18: (pi**18) / 38979295480125.0,
-        20: (pi**20) / 2890865361321800.0,
-        22: (pi**22) / 132877121600.0 / 157009.0,   # optional extension
-        24: (pi**24) / 1919190.0 / 18243225.0,      # optional extension
-    }
-    if u in table:
-        return table[u]
-    # Fallback (if you prefer and mpmath is available):
-    try:
-        import mpmath as mp
-        return float(mp.zeta(u))
-    except Exception:
-        raise RuntimeError(f"No ζ({u}) available; extend the table or install mpmath.")
-
-
-import numpy as np
-from mpmath import mp
 
 def mI(k: int, p: int, dps: int = 80):
     """
@@ -845,7 +790,7 @@ def raw_moment(p, a, precise_method=None):
     return total
 
 
-def central_moment(p, a, precise_method=None):
+def central_moment(p, a):
     """
     Compute the p-th central moment E[(M - E[M])^p].
 
@@ -880,7 +825,7 @@ def central_moment(p, a, precise_method=None):
         central_moment_val += binom * current_raw_moment * (-mu)**(p - k)
     return central_moment_val
 
-def summary_stats(a, precise_method=None):
+def summary_stats(a):
     """
     Compute summary statistics for a Metalog distribution.
 
@@ -918,7 +863,6 @@ def summary_stats(a, precise_method=None):
         "modes": [fmt(x) for x in modes],
         "anti_modes": [fmt(x) for x in anti_modes],
     }
-
 
 # Sample test
 a = (22.62, 5.64, 3.19, 35.51)
