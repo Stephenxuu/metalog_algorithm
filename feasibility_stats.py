@@ -1,8 +1,8 @@
 
 # This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
+# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Zixin S. Xu
 #
-# This code is written by Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
+# This code is written by Zixin Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
 # use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
 # we kindly request that you cite the above paper.
 
