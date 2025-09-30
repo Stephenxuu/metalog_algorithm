@@ -1,3 +1,4 @@
+
 # This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
 # "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, and Thomas W. Keelin
 #
@@ -13,7 +14,7 @@
 # a = (22.71, 1.74, 486.9, 15.4, -2398)           # coefficient vector
 # Given coefficients, you can also find the mean, variance, standard deviation, modes and antimodes of the metalog using:
 # result = summary_stats(a)                       # Find the summary statistics
-
+import time
 import math
 import numpy as np
 from scipy.optimize import root_scalar, newton
@@ -22,8 +23,7 @@ import sympy as sp
 import pandas as pd
 from math import log, factorial, pi
 from scipy.special import comb
-from scipy.integrate import quad
-
+from functools import lru_cache
 
 # Utility function
 def round_list(lst):
@@ -623,31 +623,138 @@ def feasible(a, tol=1e-6):
         "tail_feasible_one": tailfeasible_one
     }
  
-def I(j, u):
+def compute_J0(i, u):
     """
-    Numerically approximate I(j,u) = ∫_{0 to 1} (y - 0.5)^j * [ln(y)]^u dy.
-    j, u should be nonnegative integers for the formula to make sense
-    (and to avoid issues with branch cuts of ln(y) and integrability).
+    Compute J0 precisely using symbolic differentiation of the Beta function.
+
+    Args:
+        i (int): Nonnegative integer index for the first derivative.
+        u (int): Nonnegative integer index for the second derivative.
+
+    Returns:
+        float: The computed J0(i, u) value.
     """
+    a, b = sp.symbols('a b')
+    B = sp.gamma(a) * sp.gamma(b) / sp.gamma(a + b)
+    W = sp.diff(B, a, i, b, u)
+    W_val = W.subs({a: 1, b: 1})
+    J0 = ((-1)**u) / (sp.factorial(i) * sp.factorial(u)) * W_val
+    return float(J0)
 
-    def integrand(y):
-        # Guard against y=0 in the log
-        if y == 0.0:
-            return 0.0
-        return (y - 0.5)**j * (log(y/(1-y)))**u
+from mpmath import mp
 
-    # if j and u have different parity: the integral is 0
-    if (j % 2) != (u % 2):
-        result = 0.0
-    # if j and u have the same parity: integrate from 0 to 1
-    else:    
-        result, err = quad(integrand, 0.0, 1.0)
-    return result
-    
+def _zeta_even(u: int) -> float:
+    """
+    ζ(u) for even positive integers u (fast/closed forms).
+    Extend the table if you expect u > 24.
+    """
+    if u % 2 == 1 or u < 2:
+        raise ValueError("zeta_even is only defined for even u >= 2.")
+    # Known exact values: ζ(2)=π^2/6, ζ(4)=π^4/90, ζ(6)=π^6/945, ...
+    table = {
+        2:  (pi**2)  / 6.0,
+        4:  (pi**4)  / 90.0,
+        6:  (pi**6)  / 945.0,
+        8:  (pi**8)  / 9450.0,
+        10: (pi**10) / 93555.0,
+        12: (pi**12) / 638512875.0,
+        14: (pi**14) / 1825305300.0,
+        16: (pi**16) / 325641566250.0,
+        18: (pi**18) / 38979295480125.0,
+        20: (pi**20) / 2890865361321800.0,
+        22: (pi**22) / 132877121600.0 / 157009.0,   # optional extension
+        24: (pi**24) / 1919190.0 / 18243225.0,      # optional extension
+    }
+    if u in table:
+        return table[u]
+    # Fallback (if you prefer and mpmath is available):
+    try:
+        import mpmath as mp
+        return float(mp.zeta(u))
+    except Exception:
+        raise RuntimeError(f"No ζ({u}) available; extend the table or install mpmath.")
+
+
+import numpy as np
+from mpmath import mp
+
+def mI(k: int, p: int, dps: int = 80):
+    """
+    High-precision builder for I[m,u] via Lemma 1:
+
+        I(m,u) = u! * sum_{n=0}^m C(m,n) * (-1/2)^(m-n) * S_{n,u},
+
+    with
+        S_{n,0} = 1/(n+1),
+        S_{0,u} = 0 (u odd),  S_{0,u} = 2(1 - 2^{1-u}) zeta(u) (u even >= 2),
+        S_{n,u} = [n/(n+1)] * sum_{k=1}^u   (S_{n-1,k} - S_{n,k-1})
+                + [1/(n+1)] * sum_{k=1}^{u-1}(S_{n-1,k} - S_{n,k])
+                + 1/n - 1/(n+1)^2,  for n,u >= 1.
+
+    Returns
+    -------
+    I_mat : (j_max+1) x (u_max+1) NumPy array of mp.mpf
+    """
+    mp.dps = int(dps)
+
+    j_max = p * ((k - 1) // 2)
+    u_max = p
+
+    # --- Build S in high precision ---
+    S = np.empty((j_max + 1, u_max + 1), dtype=object)
+
+    # S_{n,0}
+    for n in range(j_max + 1):
+        S[n, 0] = mp.mpf(1) / (n + 1)
+
+    # S_{0,u}
+    for u in range(1, u_max + 1):
+        if u % 2 == 1:
+            S[0, u] = mp.mpf(0)
+        else:
+            S[0, u] = mp.mpf(2) * (mp.mpf(1) - mp.power(2, 1 - u)) * mp.zeta(u)
+
+    # Recurrence (n,u >= 1)
+    for n in range(1, j_max + 1):
+        inv_n   = mp.mpf(1) / n
+        inv_np1 = mp.mpf(1) / (n + 1)
+        base    = inv_n - inv_np1**2
+        for u in range(1, u_max + 1):
+            s1 = mp.mpf(0)
+            s2 = mp.mpf(0)
+            for k_idx in range(1, u + 1):
+                s1 += (S[n - 1, k_idx] - S[n, k_idx - 1])
+            for k_idx in range(1, u):
+                s2 += (S[n - 1, k_idx] - S[n, k_idx])
+            S[n, u] = (n * inv_np1) * s1 + inv_np1 * s2 + base
+
+    # --- Assemble I[m,u] in high precision ---
+    I_mat = np.empty((j_max + 1, u_max + 1), dtype=object)
+    for m in range(j_max + 1):
+        for u in range(u_max + 1):
+            if (m + u) % 2 == 1:
+                I_mat[m, u] = mp.mpf(0)
+                continue
+            acc = mp.mpf(0)
+            # binomial sum
+            for n in range(m + 1):
+                acc += mp.binomial(m, n) * mp.power(-mp.mpf('0.5'), m - n) * S[n, u]
+            I_mat[m, u] = mp.factorial(u) * acc
+
+    return I_mat
+
+
+
 def generate_combinations(n, length):
     """
     Generate all possible tuples of non-negative integers summing to n with given length.
-    Returns a list of tuples, where each tuple represents a valid combination.
+
+    Args:
+        n (int): The sum that all elements in the tuple should equal.
+        length (int): The length of each tuple.
+
+    Returns:
+        list: List of tuples, where each tuple represents a valid combination.
     """
     if length == 1:
         if n >= 0:
@@ -659,150 +766,165 @@ def generate_combinations(n, length):
             result.append((i,) + sub_combo)
     return result
 
-def raw_moment(t, a):
+from math import factorial
+
+def raw_moment(p, a, precise_method=None):
     """
-    Compute the t-th moment of M(y) for given t, k, and coefficients a.
-    
-    Parameters:
-    - t: The moment order (integer ≥ 1)
-    - k: Number of terms in M(y) (integer ≥ 2)
-    - a: List of coefficients a[j] for j = 1 to k
-    
-    Returns:
-    - The t-th moment value
+    Compute E[M^p] for Metalog 2.0 coefficients a[0..k-1], using the combinatorial
+    expansion in your spec and I(m,u) (either precomputed via mI or direct).
     """
+    if not isinstance(p, int) or p < 1:
+        raise ValueError("Moment order p must be a positive integer.")
+    # Always use precise path; keep signature for compatibility
+    precise_method = True
     
-    def floor_div_2(j):
-        """
-        Compute ⌊(j-1)/2⌋ for a given j.
-        """
+    def floor_div_2(j):  # j is 1-based index
         return (j - 1) // 2
     
-    # Get sets μ and s
-    k=len(a)
+    k = len(a)
+    # μ = {j : j%4 ∈ {0,1}},  s = {j : j%4 ∈ {2,3}} with j 1-based
     mu = [j for j in range(1, k + 1) if j % 4 <= 1]
-    s = [j for j in range(1, k + 1) if j % 4 >= 2]
-    # Initialize total moment
-    total = 0
-    
-    # Iterate over all possible n1, n2 where n1 + n2 = t
-    for n1 in range(t + 1):  # n1 from 0 to t
-        n2 = t - n1  # n2 = t - n1
+    s  = [j for j in range(1, k + 1) if j % 4 >= 2]
+
+    # Precompute I-matrix (precise)
+    I_matrix = mI(k, p)
+    # j_max for mI is p * floor((k-1)/2); u ranges 0..p
+
+    total = 0.0
+    for n in range(p + 1):
+        u = p - n
+
+        # weak compositions of n over |mu| parts; and of (p-n) over |s| parts
+        c_combinations = generate_combinations(n, len(mu))
+        d_combinations = generate_combinations(u, len(s))
         
-        # Generate all combinations of c_j for j in μ summing to n1
-        c_combinations = generate_combinations(n1, len(mu))
-        
-        # Generate all combinations of d_j for j in s summing to n2
-        d_combinations = generate_combinations(n2, len(s))
-        
-        # Iterate over all pairs of c and d combinations
         for c in c_combinations:
+            c_dict = {mu[i]: c[i] for i in range(len(mu))}
+            # denominator part from μ
+            denom_mu = 1
+            prod_mu = 1.0
+            for j in mu:
+                cj = c_dict[j]
+                denom_mu *= factorial(cj)
+                if cj:
+                    prod_mu *= (a[j-1] ** cj)
+
             for d in d_combinations:
-                # Create dictionaries for c_j and d_j
-                c_dict = {mu[i]: c[i] for i in range(len(mu))}
                 d_dict = {s[i]: d[i] for i in range(len(s))}
-                
-                # Compute factorials in denominators
-                denom_mu = 1
-                for cj in c_dict.values():
-                    denom_mu *= factorial(cj)
+                # denominator part from s
                 denom_s = 1
-                for dj in d_dict.values():
-                    denom_s *= factorial(dj)
-                denom = denom_mu * denom_s
-                
-                # Compute products in numerators
-                prod_mu = 1
-                for j in mu:
-                    prod_mu *= a[j-1] ** c_dict[j]  # a[j-1] because a is 0-indexed
-                prod_s = 1
+                prod_s = 1.0
                 for j in s:
-                    prod_s *= a[j-1] ** d_dict[j]
-                
-                # Compute m (exponent for I(m, u))
+                    dj = d_dict[j]
+                    denom_s *= factorial(dj)
+                    if dj:
+                        prod_s *= (a[j-1] ** dj)
+
+                # m index
                 m = 0
                 for j in mu:
                     m += c_dict[j] * floor_div_2(j)
                 for j in s:
                     m += d_dict[j] * floor_div_2(j)
                 
-                # u is n2
-                u = n2
+                # parity check from the spec: only accumulate if m%2 == u%2
+                if (m & 1) != (u & 1):
+                    continue
+
+                # fetch I(m,u)
+                # guard out-of-bounds just in case; treat as zero
+                if 0 <= m < I_matrix.shape[0] and 0 <= u < I_matrix.shape[1]:
+                    I_val = I_matrix[m, u]
+                else:
+                    continue
                 
-                # Compute the term
-                term = (factorial(t) / denom) * prod_mu * prod_s * I(m, u)
+                denom = denom_mu * denom_s
+                term = factorial(p) * (prod_mu * prod_s / denom) * I_val
                 total += term
+
     return total
 
-def central_moment(t, a):
+
+def central_moment(p, a, precise_method=None):
     """
-    Computes the t-th central moment E[(M - E[M])^t].
+    Compute the p-th central moment E[(M - E[M])^p].
+
     Args:
-        t (int): Order of the central moment (t >= 0).
-        a (float): Parameter of the distribution.
+        p (int): Order of the central moment (non-negative integer).
+        a (list): Coefficients of the distribution.
+        precise_method (bool): If True, precompute I matrix using mI and retrieve I[j, u];
+                             if False, compute I(j, u) directly. If None, automatically
+                             set to True when len(a) >= 12, False otherwise.
+
     Returns:
-        float: The t-th central moment.
+        float: The p-th central moment.
+
     Raises:
-        ValueError: If t is negative.
+        ValueError: If p is negative or precise_method is not a boolean.
     """
-    if not isinstance(t, int) or t < 0:
-        raise ValueError("Moment order t must be a non-negative integer.")
+    if not isinstance(p, int) or p < 0:
+        raise ValueError("Moment order p must be a non-negative integer.")
     
-    # Get the mean (1st raw moment)
+    # Always use precise path
     mu = raw_moment(1, a)
     
-    if t == 0:
-        return 1.0  # E[(M - mu)^0] = 1
-    if t == 1:
-        return 0.0  # E[M - mu] = 0
+    if p == 0:
+        return 1.0
+    if p == 1:
+        return 0.0
     
-    # Compute the t-th central moment using raw moments up to t
-    central_moment = 0.0
-    for k in range(t + 1):
-        binom = comb(t, k, exact=True)  # Binomial coefficient
-        current_raw_moment = raw_moment(k, a) if k > 0 else 1.0  # E[M^k], E[M^0] = 1
-        central_moment += binom * current_raw_moment * (-mu)**(t - k)
-    
-    return central_moment
+    central_moment_val = 0.0
+    for k in range(p + 1):
+        binom = comb(p, k)
+        current_raw_moment = raw_moment(k, a) if k > 0 else 1.0
+        central_moment_val += binom * current_raw_moment * (-mu)**(p - k)
+    return central_moment_val
 
-def summary_stats(a):
+def summary_stats(a, precise_method=None):
     """
-    Computes summary statistics (mean, variance, standard deviation, skewness, kurtosis,
-    modes, and anti-modes) for a metalog distribution.
+    Compute summary statistics for a Metalog distribution.
 
     Args:
-        a (tuple): Coefficients of the metalog distribution.
+        a (tuple): Coefficients of the Metalog distribution.
+        precise_method (bool): If True, precompute I matrix using mI and retrieve I[j, u];
+                             if False, compute I(j, u) directly. If None, automatically
+                             set to True when len(a) >= 12, False otherwise.
 
     Returns:
         dict: Dictionary containing mean, variance, standard deviation, skewness, kurtosis,
-              modes, and anti-modes.
+              modes, and anti-modes. All float values rounded to 6 digits.
     """
+    # Always use precise path
+    mu   = raw_moment(1, a)
+    var  = central_moment(2, a)
+    sd   = math.sqrt(float(var)) if var > 0 else 0.0
+    skew = central_moment(3, a) / (sd ** 3) if sd != 0 else 0.0
+    kurt = central_moment(4, a) / (sd ** 4) if sd != 0 else 0.0
 
-    # Now compute all desired statistics
-    mu = raw_moment(1,a)
-    var = central_moment(2,a)
-    sd = math.sqrt(var)
-    skew = central_moment(3,a) / (sd ** 3)
-    kurt = central_moment(4,a) / (sd ** 4)
+    feas = feasible(a)
+    modes = feas["modes"]
+    anti_modes = feas["anti_modes"]
 
-    # Suppose you have some feasible(...) function:
-    modes = feasible(a)["modes"]
-    anti_modes = feasible(a)["anti_modes"]
+    # Helper to normalize to float with 6 digits
+    def fmt(x):
+        return round(float(x), 6)
 
     return {
-        "mean": mu,
-        "variance": var,
-        "standard deviation": sd,
-        "skewness": skew,
-        "kurtosis": kurt,
-        "modes": modes,
-        "anti_modes": anti_modes
+        "mean": fmt(mu),
+        "variance": fmt(var),
+        "standard_deviation": fmt(sd),
+        "skewness": fmt(skew),
+        "kurtosis": fmt(kurt),
+        "modes": [fmt(x) for x in modes],
+        "anti_modes": [fmt(x) for x in anti_modes],
     }
 
-# Sample test
-# a = (22.62, 5.64, 3.19, 35.51)
-# check = feasible(a)
-# print(check)
-# result = summary_stats(a)
-# print(result)
 
+# Sample test
+a = (22.71, 1.74, 486.9, 15.4, -2398)
+feasibility= feasible(a)
+print(feasibility)
+result = summary_stats(a, precise_method=True)
+print(result)
+
+# skewness and kurtosis
