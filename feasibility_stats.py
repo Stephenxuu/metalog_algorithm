@@ -713,15 +713,13 @@ def generate_combinations(n, length):
 
 from math import factorial
 
-def raw_moment(p, a, precise_method=None):
+def raw_moment(p, a):
     """
     Compute E[M^p] for Metalog 2.0 coefficients a[0..k-1], using the combinatorial
-    expansion in your spec and I(m,u) (either precomputed via mI or direct).
+    expansion in your spec and high-precision I(m,u) from mI().
     """
     if not isinstance(p, int) or p < 1:
         raise ValueError("Moment order p must be a positive integer.")
-    # Always use precise path; keep signature for compatibility
-    precise_method = True
     
     def floor_div_2(j):  # j is 1-based index
         return (j - 1) // 2
@@ -732,8 +730,7 @@ def raw_moment(p, a, precise_method=None):
     s  = [j for j in range(1, k + 1) if j % 4 >= 2]
 
     # Precompute I-matrix (precise)
-    I_matrix = mI(k, p)
-    # j_max for mI is p * floor((k-1)/2); u ranges 0..p
+    I_matrix = mI(k, p)  # shape: (p * floor((k-1)/2) + 1) x (p + 1)
 
     total = 0.0
     for n in range(p + 1):
@@ -776,8 +773,7 @@ def raw_moment(p, a, precise_method=None):
                 if (m & 1) != (u & 1):
                     continue
 
-                # fetch I(m,u)
-                # guard out-of-bounds just in case; treat as zero
+                # fetch I(m,u); guard bounds
                 if 0 <= m < I_matrix.shape[0] and 0 <= u < I_matrix.shape[1]:
                     I_val = I_matrix[m, u]
                 else:
@@ -796,21 +792,14 @@ def central_moment(p, a):
 
     Args:
         p (int): Order of the central moment (non-negative integer).
-        a (list): Coefficients of the distribution.
-        precise_method (bool): If True, precompute I matrix using mI and retrieve I[j, u];
-                             if False, compute I(j, u) directly. If None, automatically
-                             set to True when len(a) >= 12, False otherwise.
+        a (list/tuple): Coefficients of the distribution.
 
     Returns:
         float: The p-th central moment.
-
-    Raises:
-        ValueError: If p is negative or precise_method is not a boolean.
     """
     if not isinstance(p, int) or p < 0:
         raise ValueError("Moment order p must be a non-negative integer.")
     
-    # Always use precise path
     mu = raw_moment(1, a)
     
     if p == 0:
@@ -820,10 +809,11 @@ def central_moment(p, a):
     
     central_moment_val = 0.0
     for k in range(p + 1):
-        binom = comb(p, k)
+        binom = math.comb(p, k)
         current_raw_moment = raw_moment(k, a) if k > 0 else 1.0
         central_moment_val += binom * current_raw_moment * (-mu)**(p - k)
     return central_moment_val
+
 
 def summary_stats(a):
     """
@@ -831,15 +821,11 @@ def summary_stats(a):
 
     Args:
         a (tuple): Coefficients of the Metalog distribution.
-        precise_method (bool): If True, precompute I matrix using mI and retrieve I[j, u];
-                             if False, compute I(j, u) directly. If None, automatically
-                             set to True when len(a) >= 12, False otherwise.
 
     Returns:
         dict: Dictionary containing mean, variance, standard deviation, skewness, kurtosis,
               modes, and anti-modes. All float values rounded to 6 digits.
     """
-    # Always use precise path
     mu   = raw_moment(1, a)
     var  = central_moment(2, a)
     sd   = math.sqrt(float(var)) if var > 0 else 0.0
@@ -850,7 +836,6 @@ def summary_stats(a):
     modes = feas["modes"]
     anti_modes = feas["anti_modes"]
 
-    # Helper to normalize to float with 6 digits
     def fmt(x):
         return round(float(x), 6)
 
@@ -865,10 +850,10 @@ def summary_stats(a):
     }
 
 # Sample test
-a = (22.62, 5.64, 3.19, 35.51)
+# Check if mI function is correct by comparing with I() function
+a = (0.15714068804084,580.262046353578,-999.77280719392,-2315.58330415306,3997.21677181125,-4293.13127721634,7904.1528891325,14073.909289652,-26201.8367792964,8980.0484030083,-17931.9078280926,-20132.6413899779,41235.188521266,-3975.97992831338,9169.52188456059)
+
 feasibility= feasible(a)
 print(feasibility)
-result = summary_stats(a, precise_method=True)
+result = summary_stats(a)
 print(result)
-
-# skewness and kurtosis
