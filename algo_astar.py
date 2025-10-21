@@ -504,7 +504,7 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
     summary = summary_stats(a_star)
     mean = summary["mean"]
     variance = summary["variance"]
-    sd = summary["standard deviation"]
+    sd = summary["standard_deviation"]
     modes = summary["modes"]
     antimodes = summary["anti_modes"]
     return {
@@ -520,44 +520,6 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
         "Iterations": iterations,
         "Running time": running_time
     }
-
-def process_datasets(datasets, k_values, output_file):
-    """
-    Processes multiple datasets for different k values and saves results to an Excel file.
-
-    Args:
-        datasets (dict): Dictionary of datasets with 'x' and 'y' arrays.
-        k_values (dict): Dictionary mapping dataset names to lists of k values.
-        output_file (str): Path to the output Excel file.
-
-    Returns:
-        None: Saves results to the specified Excel file.
-    """
-    results = []
-    for dataset_name, data in datasets.items():
-        x = data['x']
-        y = data['y']
-        for k in k_values[dataset_name]:
-            result = find_a_star(k, x, y)
-            a_ols = result["a_ols"]
-            f_a_ols = result["f(a_ols)"]
-            a_star = result["Best a*"]
-            f_a_star = result["f(a*)"]
-            iterations = result.get("Iterations", None)
-            running_time = result["Running time"]
-            results.append({
-                "Dataset": dataset_name,
-                "k": k,
-                "a_ols": round_list(a_ols),
-                "f(a_ols)": round(f_a_ols, 6),
-                "a_star": round_list(a_star),
-                "f(a*)": round(f_a_star, 6),
-                "Iterations": iterations,
-                "Running Time (s)": round(running_time, 6)
-            })
-    results_df = pd.DataFrame(results)
-    results_df.to_excel(output_file, index=False)
-    print(f"Results saved to {output_file}")
 
 # Example usage
 x = np.array([1, 2, 4, 8, 12])              # Quantile values
