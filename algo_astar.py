@@ -248,12 +248,14 @@ def grid_search_newtons_method(a, b, tol):
             y_0 = y_center
             G_prime_func = lambda y: G_prime(y)
             G_dprime_func = lambda y: G_doubleprime(y)
-            y_newton = newton(G_prime_func, y_0, fprime=G_dprime_func, tol=tol, maxiter=100)
-            if G(y_newton) < 0:
-                if y_newton > 0 and y_newton < 1:
-                    list_y.append(y_newton)
-                else:
-                    print("Convergence failed for", y_newton)
+            # Clip initial guess to stay within open interval and guard Newton failures
+            try:
+                y0_clipped = float(np.clip(y_0, tol, 1 - tol))
+                y_newton = newton(G_prime_func, y0_clipped, fprime=G_dprime_func, tol=tol, maxiter=100)
+            except (RuntimeError, ValueError, ZeroDivisionError):
+                y_newton = None
+            if y_newton is not None and 0 < y_newton < 1 and G(y_newton) < 0:
+                list_y.append(y_newton)
     if G(0) < G(10**-15) and G(0) < 0:
         list_y.append(0)
     if G(1) < G(1 - 10**-15) and G(1) < 0:
