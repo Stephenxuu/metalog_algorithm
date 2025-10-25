@@ -107,7 +107,7 @@ To compute reliable `summary_stats`, you should first find a **feasible** coeffi
 
 ## License
 
-This code is freely available for academic, commercial, and personal use. If you use or modify it, we kindly request that you cite:
+This code is licensed under the Creative Commons Attribution 4.0. International License, CC-BY. So long as you provide attribution to Zixin (Stephen) Xu, you may copy it, make derivative works, and use it freely, including for commercial purposes. If you use or modify it, we kindly request that you cite:
 
 **"On the Properties of the Metalog Distribution"**
 by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin, and Zixin Stephen Xu (forthcoming)
