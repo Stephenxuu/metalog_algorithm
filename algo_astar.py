@@ -1,10 +1,9 @@
 # This file implements the algorithm for fitting an always feasible metalog 2.0 distribution to (quantile, probability) data.
-# It implements Algorithm 1 from the forthcoming paper:
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Zixin Stephen Xu
+# It implements Algorithm 2 (finding the best feasible fit) from the forthcoming paper:
+# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
 #
-# This code is written by Zixin Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
-# use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
-# we kindly request that you cite the above paper.
+# Copyright (c) 2025 Stephen Xu. Released under the MIT License; see the LICENSE file for the full text.
+# If you find this code useful, we kindly request that you cite the above paper.
 #
 # The main function is find_a_star(k, x, y), which returns the optimal a-coefficients for a k-term metalog distribution
 # that best fits the (x,y) points -- i.e., the ( quantile, probability ) points.
@@ -13,7 +12,7 @@
 # x = np.array( [ 1, 2, 4, 8, 12 ] )              # quantile values
 # y = np.array( [ 0.1, 0.3, 0.5, 0.7, 0.9 ] )     # cumulative probabilities
 # k = 4                                           # number of terms
-# a_star = find_a_star( k, x, y )                 # The optimal metalog coefficients
+# a_star = find_a_star( k, x, y )["Best a*"]      # The optimal metalog coefficients
 #
 # After you have these optimal a_star coefficients, you can find the quantile values at arbitrary cumulative probability
 # levels, p, using:
@@ -400,7 +399,7 @@ def f(a, x, Y):
     residual = x - Y @ a
     return residual.T @ residual
 
-def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
+def find_a_star(k, x, y, tol=1e-5, epsilon=1e-5):
     """
     Finds the optimal metalog coefficients a* that minimize the residual sum of squares while ensuring feasibility.
 
@@ -408,8 +407,8 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
         k (int): Number of terms in the metalog distribution.
         x (numpy.ndarray): Quantile values.
         y (numpy.ndarray): Cumulative probabilities.
-        tol (float, optional): Tolerance for numerical convergence and root filtering. Defaults to 1e-6.
-        epsilon (float, optional): Threshold for inequality constraints in quadratic programming. Defaults to 1e-6.
+        tol (float, optional): Tolerance for numerical convergence and root filtering. Defaults to 1e-5.
+        epsilon (float, optional): Threshold for inequality constraints in quadratic programming. Defaults to 1e-5.
 
     Returns:
         dict: Dictionary containing a_ols, a*, objective values, and summary statistics.
@@ -437,6 +436,7 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
     Q = matrix(2 * Y.T @ Y)
     c = matrix(-2 * Y.T @ x)
     iterations = 0
+    max_iterations = 1000
 
     while not feasible:
         if iterations == 0:
@@ -496,6 +496,12 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
         else:
             y_list.extend(y_list_i)
         iterations += 1
+        if not feasible and iterations > max_iterations:
+            # Guards against an endless loop, which occurs when the feasibility check fails only at points
+            # that are already constrained (for example, when epsilon is not larger than tol).
+            raise RuntimeError(
+                f"find_a_star did not reach a feasible fit within {max_iterations} iterations. "
+                f"Increase epsilon (currently {epsilon}) relative to tol (currently {tol}).")
 
     iterations = iterations - 1
     a_star = a_current
@@ -521,9 +527,10 @@ def find_a_star(k, x, y, tol=10e-6, epsilon=10e-6):
         "Running time": running_time
     }
 
-# Example usage
-x = np.array([1, 2, 4, 8, 12])              # Quantile values
-y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])     # Cumulative probabilities
-k = 4                                        # Number of terms
-a_star = find_a_star(k, x, y)                # The optimal metalog coefficients
-print(a_star)
+# Example usage (runs only when this file is executed directly, not on import)
+if __name__ == "__main__":
+    x = np.array([1, 2, 4, 8, 12])              # Quantile values
+    y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])     # Cumulative probabilities
+    k = 4                                        # Number of terms
+    result = find_a_star(k, x, y)                # Fit results; result["Best a*"] holds the optimal coefficients
+    print(result)

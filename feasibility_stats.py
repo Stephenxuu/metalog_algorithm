@@ -1,10 +1,10 @@
 
 # This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Zixin S. Xu
+# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
+# The feasibility check implements Algorithm 1 (identification of the inflection points) of the paper.
 #
-# This code is written by Zixin Stephen Xu. This code is provided freely for any purpose, including academic, commercial, and personal
-# use. There are no restrictions on modification, redistribution, or incorporation into other projects. If you find this useful,
-# we kindly request that you cite the above paper.
+# Copyright (c) 2025 Stephen Xu. Released under the MIT License; see the LICENSE file for the full text.
+# If you find this code useful, we kindly request that you cite the above paper.
 
 # Example usage:
 # a = (22.62, 5.64, 3.19, 35.51)         # coefficient vector
@@ -499,9 +499,10 @@ def feasible(a, tol=1e-6):
                         coefficients[u] += check_a[t] * term
                     else:
                         print(f"Index out of range: u={u}, t={t}, len(coefficients)={len(coefficients)}, len(hat_a)={len(hat_a)}")
-            roots = np.roots(coefficients)
-            if len(roots) > 0 or roots is not None:
-                roots = [root for root in roots if root > tol and root < 1 - tol]
+            # coefficients[u] multiplies y**u (ascending order); np.roots expects the highest power first
+            roots = np.roots(coefficients[::-1])
+            # keep only the real roots in (0, 1)
+            roots = [root.real for root in roots if abs(root.imag) <= tol and tol < root.real < 1 - tol]
             roots.sort()
         elif 2 >= num_mu:
             roots = []
@@ -517,8 +518,8 @@ def feasible(a, tol=1e-6):
             u -= 1
         coefficients = coefficients0[::-1]
         roots = np.roots(coefficients)
-        if len(roots) > 0 or roots is not None:
-            roots = [root for root in roots if root > tol and root < 1 - tol]
+        # keep only the real roots in (0, 1)
+        roots = [root.real for root in roots if abs(root.imag) <= tol and tol < root.real < 1 - tol]
         roots.sort()
     elif K > 2:
         i = K
@@ -532,8 +533,8 @@ def feasible(a, tol=1e-6):
             u -= 1
         coefficients = coefficients0[::-1]
         r_i = np.roots(coefficients)
-        if len(r_i) > 0 or r_i is not None:
-            r_i = [root for root in r_i if root > tol and root < 1 - tol]
+        # keep only the real roots in (0, 1)
+        r_i = [root.real for root in r_i if abs(root.imag) <= tol and tol < root.real < 1 - tol]
         r_i.sort()
         r[i, 0] = 0
         r[i, 1:len(r_i) + 1] = r_i
@@ -849,11 +850,11 @@ def summary_stats(a):
         "anti_modes": [fmt(x) for x in anti_modes],
     }
 
-# Sample test
-# Check if mI function is correct by comparing with I() function
-a = (0.15714068804084,580.262046353578,-999.77280719392,-2315.58330415306,3997.21677181125,-4293.13127721634,7904.1528891325,14073.909289652,-26201.8367792964,8980.0484030083,-17931.9078280926,-20132.6413899779,41235.188521266,-3975.97992831338,9169.52188456059)
+# Example usage with a 15-term metalog (runs only when this file is executed directly, not on import)
+if __name__ == "__main__":
+    a = (0.15714068804084,580.262046353578,-999.77280719392,-2315.58330415306,3997.21677181125,-4293.13127721634,7904.1528891325,14073.909289652,-26201.8367792964,8980.0484030083,-17931.9078280926,-20132.6413899779,41235.188521266,-3975.97992831338,9169.52188456059)
 
-feasibility= feasible(a)
-print(feasibility)
-result = summary_stats(a)
-print(result)
+    feasibility = feasible(a)
+    print(feasibility)
+    result = summary_stats(a)
+    print(result)
