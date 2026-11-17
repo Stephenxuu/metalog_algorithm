@@ -1,4 +1,4 @@
-# README
+# metalog2
 
 ## Introduction
 
@@ -11,36 +11,25 @@ The code offers tools to fit always-feasible Metalog 2.0 distributions, perform 
 
 ## Overview
 
-This repository contains two Python scripts:
+The Python package `metalog2` contains two modules:
 
-* **`algo_astar.py`**: Computes the optimal coefficient vector $a^*$ for a Metalog distribution using constrained quadratic programming with Newton’s method and grid search for feasibility checking.
-* **`feasibility_stats.py`**: Provides functions for feasibility checking, statistical moment calculation, and auxiliary computations, which support `algo_astar.py` and can be used independently.
+* **`metalog2/algo_astar.py`**: Computes the optimal coefficient vector a* for a Metalog distribution using constrained quadratic programming with Newton’s method and grid search for feasibility checking.
+* **`metalog2/feasibility_stats.py`**: Provides functions for feasibility checking, statistical moment calculation, and auxiliary computations, which support `algo_astar.py` and can be used independently.
 
-Together, these scripts allow you to fit Metalog distributions, verify feasibility, and compute detailed statistics for analysis or reporting.
+Together, these modules allow you to fit Metalog distributions, verify feasibility, and compute detailed statistics for analysis or reporting. The main functions can be imported directly from `metalog2`.
 
-## Dependencies
+## Installation
 
-All dependencies are listed in `requirements.txt`. You can install them all at once by running:
-
-```sh
-pip install -r requirements.txt
-```
-
-Contents of `requirements.txt`:
-
-```
-numpy>=1.26.0,<2.0
-pandas>=2.0.0,<3.0
-scipy>=1.11.0,<2.0
-cvxopt>=1.3.0,<2.0
-sympy>=1.12,<2.0
-mpmath>=1.3.0,<2.0
-```
-
-Alternatively, you may install the packages individually:
+Install the package from PyPI (Python 3.9 or later):
 
 ```sh
-pip install numpy pandas scipy cvxopt sympy mpmath
+pip install metalog2
+```
+
+This also installs the dependencies `numpy`, `scipy`, `cvxopt`, and `mpmath`. To install the current version from GitHub instead, run:
+
+```sh
+pip install git+https://github.com/Stephenxuu/metalog_algorithm.git
 ```
 
 ## Files and Functions
@@ -51,7 +40,7 @@ Implements Algorithm 2 of the paper, fitting a feasible Metalog 2.0 distribution
 
 **Main Function**
 `find_a_star(k, x, y, tol=1e-5, epsilon=1e-5)`
-Returns the optimal feasible coefficient vector $a^*$ and associated diagnostics (RSS, mean, variance, standard deviation, modes, antimodes, runtime).
+Returns the optimal feasible coefficient vector a* and associated diagnostics (RSS, mean, variance, standard deviation, modes, antimodes, runtime).
 
 **Supporting Functions** include:
 
@@ -64,7 +53,7 @@ Example:
 
 ```python
 import numpy as np
-from algo_astar import find_a_star, calculate_Y
+from metalog2 import find_a_star, calculate_Y
 
 x = np.array([1, 2, 4, 8, 12])
 y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
@@ -89,7 +78,7 @@ Contains feasibility checking and statistical computation utilities.
 Example:
 
 ```python
-from feasibility_stats import feasible, summary_stats
+from metalog2 import feasible, summary_stats
 
 a = (22.62, 5.64, 3.19, 35.51)
 print(feasible(a))
@@ -98,17 +87,17 @@ print(summary_stats(a))
 
 ## Special Note
 
-To compute reliable `summary_stats`, you should first find a **feasible** coefficient vector $a^*$ using `find_a_star` or manually verify feasibility using `feasible(a)`. Calling `summary_stats` on an infeasible $a$ may yield misleading or undefined results.
+To compute reliable `summary_stats`, you should first find a **feasible** coefficient vector a* using `find_a_star` or manually verify feasibility using `feasible(a)`. Calling `summary_stats` on an infeasible `a` may yield misleading or undefined results.
 
 ## Notes on Usage
 
 * **Tolerance (`tol`)** controls precision of feasibility checks and root finding.
-* **Epsilon (`epsilon`)** in `find_a_star` enforces stricter inequality constraints for feasibility. If `find_a_star` stops with an error after 1000 iterations, increase `epsilon` relative to `tol`. The error occurs when a fitted tail value `s(0)` or `s(1)` lies within rounding error of `tol`, for example with `tol=epsilon=1e-6` in the `algo_astar.py` example above.
+* **Epsilon (`epsilon`)** in `find_a_star` enforces stricter inequality constraints for feasibility. If `find_a_star` stops with an error after 1000 iterations, increase `epsilon` relative to `tol`. The error occurs when a fitted tail value `s(0)` or `s(1)` lies within rounding error of `tol`, for example with `tol=epsilon=1e-6` in the `find_a_star` example above.
 * The distribution is feasible only if its density is non-negative over `[0, 1]`.
 
 ## License
 
-This code is released under the MIT License. See [`LICENSE`](LICENSE) for the full text. You may use, copy, modify, and distribute the code, including for commercial purposes, provided that the copyright notice and the permission notice are included in all copies or substantial portions of it. If you use or modify the code, we kindly request that you cite:
+This code is released under the MIT License. See [`LICENSE`](https://github.com/Stephenxuu/metalog_algorithm/blob/main/LICENSE) for the full text. You may use, copy, modify, and distribute the code, including for commercial purposes, provided that the copyright notice and the permission notice are included in all copies or substantial portions of it. If you use or modify the code, we kindly request that you cite:
 
 **"The Metalog Distribution: Properties and Feasible Estimation"**
 by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin, and Stephen Xu (working paper)

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metalog2"
+dynamic = ["version"]
+description = "Feasibility test, moments, and best feasible fit for the metalog 2.0 distribution"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Stephen Xu" }]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "cvxopt>=1.3",
+    "mpmath>=1.3",
+]
+keywords = ["metalog", "metalog distribution", "quantile-parameterized distribution", "feasibility", "moments"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+Homepage = "https://github.com/Stephenxuu/metalog_algorithm"
+Source = "https://github.com/Stephenxuu/metalog_algorithm"
+
+[tool.setuptools]
+packages = ["metalog2"]
+
+[tool.setuptools.dynamic]
+version = { attr = "metalog2.__version__" }

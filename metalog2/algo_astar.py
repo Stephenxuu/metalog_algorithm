@@ -20,20 +20,17 @@
 # basis = calculate_Y( p, k )                     # The basis for the probabilities of interest
 # quantiles = np.sum( a_star * basis, axis=1 )    # The desired quantile
 
-from feasibility_stats import feasible as fb
-from feasibility_stats import compute_b_matrix as compute_b_matrix
-from feasibility_stats import M as M
-from feasibility_stats import S as S
-from feasibility_stats import function_M as function_M
-from feasibility_stats import function_S as function_S
-from feasibility_stats import summary_stats as summary_stats
+from .feasibility_stats import feasible as fb
+from .feasibility_stats import compute_b_matrix
+from .feasibility_stats import M
+from .feasibility_stats import S
+from .feasibility_stats import function_M
+from .feasibility_stats import function_S
+from .feasibility_stats import summary_stats
 import numpy as np
-import pandas as pd
-from itertools import combinations
 from scipy.special import factorial
 from scipy.optimize import newton
 from math import log
-import sympy as sp
 import time
 from cvxopt import matrix, solvers
 
@@ -527,7 +524,7 @@ def find_a_star(k, x, y, tol=1e-5, epsilon=1e-5):
         "Running time": running_time
     }
 
-# Example usage (runs only when this file is executed directly, not on import)
+# Example usage (runs only with `python -m metalog2.algo_astar`, not on import)
 if __name__ == "__main__":
     x = np.array([1, 2, 4, 8, 12])              # Quantile values
     y = np.array([0.1, 0.3, 0.5, 0.7, 0.9])     # Cumulative probabilities

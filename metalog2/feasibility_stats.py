@@ -18,8 +18,6 @@ import math
 import numpy as np
 from scipy.optimize import root_scalar, newton
 from scipy.special import factorial
-import sympy as sp
-import pandas as pd
 from math import log, factorial, pi
 from scipy.special import comb
 from functools import lru_cache
@@ -202,7 +200,6 @@ def function_M(i, check_a, hat_a, b):
     num_mu = len(check_a)
     num_s = len(hat_a)
     K = max(num_mu, num_s)
-    y = sp.Symbol('y')
     if all(x == 0 for x in hat_a):
         if i < num_mu:
             f = lambda y: sum(check_a[t] * sum(factorial(t) * (-0.5) ** (t - i - u) / (factorial(t - i - u) * factorial(u)) * y ** u for u in range(t - i + 1)) for t in range(i, num_mu))
@@ -275,7 +272,6 @@ def function_S(i, check_a, hat_a):
     num_mu = len(check_a)
     num_s = len(hat_a)
     K = max(num_mu, num_s)
-    y = sp.Symbol('y')
     if all(x == 0 for x in hat_a):
         return 0
     elif K <= i:
@@ -850,7 +846,7 @@ def summary_stats(a):
         "anti_modes": [fmt(x) for x in anti_modes],
     }
 
-# Example usage with a 15-term metalog (runs only when this file is executed directly, not on import)
+# Example usage with a 15-term metalog (runs only with `python -m metalog2.feasibility_stats`, not on import)
 if __name__ == "__main__":
     a = (0.15714068804084,580.262046353578,-999.77280719392,-2315.58330415306,3997.21677181125,-4293.13127721634,7904.1528891325,14073.909289652,-26201.8367792964,8980.0484030083,-17931.9078280926,-20132.6413899779,41235.188521266,-3975.97992831338,9169.52188456059)
 
