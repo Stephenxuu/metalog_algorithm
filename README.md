@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This repository provides Python implementations of key algorithms and feasibility analysis techniques for the forthcoming paper:
+This repository provides Python implementations of key algorithms and feasibility analysis techniques for the paper:
 
-**"On the Properties of the Metalog Distribution"**
+**"The Metalog Distribution: Properties and Feasible Estimation"**
 by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin, and Stephen Xu
 
 The code offers tools to fit always-feasible Metalog 2.0 distributions, perform feasibility checks, compute moment statistics (mean, variance, skewness, kurtosis), and identify modes, anti-modes, and roots. This repository is intended as a computational companion to the paper, enabling researchers and practitioners to explore Metalog distribution properties and apply them in modeling and optimization tasks.
@@ -110,5 +110,5 @@ To compute reliable `summary_stats`, you should first find a **feasible** coeffi
 
 This code is released under the MIT License. See [`LICENSE`](LICENSE) for the full text. You may use, copy, modify, and distribute the code, including for commercial purposes, provided that the copyright notice and the permission notice are included in all copies or substantial portions of it. If you use or modify the code, we kindly request that you cite:
 
-**"On the Properties of the Metalog Distribution"**
-by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin, and Stephen Xu (forthcoming)
+**"The Metalog Distribution: Properties and Feasible Estimation"**
+by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin, and Stephen Xu (working paper)

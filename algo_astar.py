@@ -1,6 +1,6 @@
 # This file implements the algorithm for fitting an always feasible metalog 2.0 distribution to (quantile, probability) data.
-# It implements Algorithm 2 (finding the best feasible fit) from the forthcoming paper:
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
+# It implements Algorithm 2 (finding the best feasible fit) from the paper:
+# "The Metalog Distribution: Properties and Feasible Estimation" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
 #
 # Copyright (c) 2025 Stephen Xu. Released under the MIT License; see the LICENSE file for the full text.
 # If you find this code useful, we kindly request that you cite the above paper.

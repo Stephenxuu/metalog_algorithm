@@ -1,6 +1,6 @@
 
 # This file contains functions for feasibility checks and calculation of statistics for the metalog 2.0 distribution, taken from the paper:
-# "On the Properties of the Metalog Distribution" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
+# "The Metalog Distribution: Properties and Feasible Estimation" by Manel Baucells, Lonnie Chrisman, Thomas W. Keelin and Stephen Xu
 # The feasibility check implements Algorithm 1 (identification of the inflection points) of the paper.
 #
 # Copyright (c) 2025 Stephen Xu. Released under the MIT License; see the LICENSE file for the full text.
